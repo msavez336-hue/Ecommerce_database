@@ -362,9 +362,9 @@ SELECT * FROM PRODUCTS;
    
    -- 20\. identify the product category generating the highest revenue.
    
-   select p.category,sum(s.quantity*s,sales) as Total_Revenue
+   select p.category,sum(s.quantity*s.sales) as Total_Revenue
    from Products as p
-   jioin Sales as s
+   join Sales as s
    on p.prod_id = s.prod_id
    group by p.category
    order by Total_Revenue desc limit 1;
@@ -508,3 +508,272 @@ from payment
 join orders
 on payment.order_id = orders.order_id
 where payment_status = "Pending";
+
+-- 38\. Find customers with annual income greater than the average annual 
+
+select *
+from customers
+where annual_income > (select avg(annual_income) from customers);
+
+-- 39\. Identify the top three customers based on total sales.
+
+select concat(coalesce(first_name,"")," ",coalesce(last_name,"")) as Full_Name,
+sum(sales) as Total_sales
+from customers c
+on c.cust_id = s.cust_id
+group by Full_Name
+order by Total_sales desc limit 3;
+
+-- 40\. Find customers who purchased products from more than one category.
+
+select concat(coalesce(first_name,"")," ",coalesce(last_name,"")) as Full_Name,
+count(order_id) as Total_orders,
+count(category) as Total_categories
+from sales as s
+join customers as c
+on s.cust_id = c.cust_id
+join products as p
+on s.prod_id = p.prod_id
+group by Full_Name;
+
+-- 41\. Display each product's name, category, unit price, and total quantity sold.
+
+select prod_name,category,unit_price,sum(quantity) as Total_quantity
+from products as p
+join sales as s
+on p.prod_id = s.prod_id
+group by prod_name;
+
+-- 42\. Identify products that have never been sold.
+
+
+select prod_name,sum(quantity) as total_quantity
+from products as p
+left join sales as s
+on p.prod_id = s.prod_id
+group by prod_name
+having total_quantity is null;
+
+
+-- 43\. Find the most frequently sold product based on total quantity.
+
+
+select prod_name,category,unit_price,sum(quantity) as Total_quantity
+from products as p
+join sales as s
+on p.prod_id = s.prod_id
+group by prod_name
+order by total_quantity desc limit 1;
+
+-- 44\. Identify the product generating the highest total profit.
+
+select 
+p.prod_name,
+sum(s.profit) as total_profit
+from sales as s
+join products as p
+on s.prod_id = p.prod_id
+group by p.prod_id, p.prod_name
+order by Total_profit Desc
+limit 1;
+ 
+
+-- 45\. Find products whose unit price is greater than the average price of all products.
+
+select * from products
+WHERE UNIT_PRICE > (SELECT AVG(UNIT_PRICE)FROM PRODUCTS);
+    
+-- 46\. Calculate the revenue contribution of each product category as a percentage of total revenue.
+
+select category, round(sum(sales*quantity)/346300,2)*100 as Revenue_Percentage
+from products as p
+join sales s 
+on p.prod_id = s.prod_id
+group by category;
+
+-- 47\. Find products that generated revenue below the average product revenue.
+
+select prod_name,sum(quantity) as Total_Revenue
+from products as p
+join sales as s
+on p.prod_di = s.prod_id
+group by prod_name
+having Total_Revenue < (select avg(sales*quantity) from sales);
+
+
+
+-- 48\. Identify the top three products based on total quantity sold.
+
+SELECT
+    p.PROD_NAME,
+    SUM(s.QUANTITY) AS TOTAL_QUANTITY_SOLD
+FROM PRODUCTS AS p
+JOIN SALES AS s
+    ON p.PROD_ID = s.PROD_ID
+GROUP BY p.PROD_ID, p.PROD_NAME
+ORDER BY TOTAL_QUANTITY_SOLD DESC
+LIMIT 3;
+
+-- 49\. Compare each product's unit price with its average sales value per unit.
+
+SELECT PROD_NAME,UNIT_PRICE,categery,avg(sales*QUANTITY) AS Average_Sales_value_Per_Unit
+FROM PRODUCTS AS p
+JOIN SALES AS s
+    ON p.PROD_ID = s.PROD_ID
+GROUP BY PROD_NAME;
+
+-- 50\. Find products that have sales but generate zero or negative profit.
+
+select prod_name,sales,profit
+from products as p
+join sales as s
+on p.prod_id = s.prod_id
+where profit <=0;
+
+-- Find the Total number of orders placed in September 2026
+
+SELECT 'september 2026 orders',COUNT(order_id) AS Total_Orders 
+FROM sales
+WHERE ORDER_date between '2026-09-01' AND '2026-10-01';
+
+-- calculate the number of orders that have been delivered 
+
+select order_status, count(*) as Total_orders
+from orders
+where order_status = 'Delivered'
+group by order_status;
+
+-- calculate the number of orders that have been cancelled
+
+select order_status, count(*) as Total_orders
+from orders
+where order_status = 'Cancelled'
+group by order_status;
+
+-- Find the average delivery time in days for delivered sales
+
+ 
+SELECT
+    AVG(DATEDIFF(s.DELIVERY_DATE, s.ORDER_DATE)) AS AVG_DELIVERY_DAYS
+FROM ORDERS AS o
+JOIN SALES AS s
+    ON o.ORDERS_ID = s.ORDER_ID
+WHERE o.ORDER_STATUS = 'Delivered';
+
+
+-- identify sales recored with delivery time exceeding 3 days
+
+select *,  delivery_date - order_date as Delivery_in_days
+from sales
+having Delivery_in_days > 3;
+
+-- Find the orders that have not yet been delivered
+
+select * from orders
+where order_status not in ('Dlivered','Cancelled');
+
+-- calculate the percentage of orders delivered successfully
+
+
+SELECT
+    ORDER_STATUS,
+    ROUND((COUNT(*) / 20) * 100, 2) AS Total_orders
+FROM ORDERS
+GROUP BY ORDER_STATUS;
+
+
+
+-- identify customers who have places orders with different delivery locations
+
+
+select c.cust_id, c.first_name,c.last_name,count(distinct shipping_address) as Total_locations
+from customers as c
+join orders as o
+on c.cust_id = o.cust_id
+group by c.cust_id
+having Total_locations > 1;
+
+-- Find the daily revenue generated by business
+
+select order_date, sum(sales*quantity) as Total_Revenue
+from sales
+group by order_date;
+
+-- identify the day with the highest sales
+
+select order_date, sum(sales*quantity) as Total_Revenue
+from sales
+group by order_date
+order by Total_Revenue desc limit 1;
+
+-- Calculate the total payment amount received from completed payments
+
+select payment_status,sum(payment_amount) as Total_Amount
+from payments
+where payment_status = 'Completed'
+group by payment_status;
+
+-- Find the total valuue of pending payments
+
+select payment_status,sum(payment_amount) as Total_Amount
+from payments
+where payment_status = 'Pending'
+group by payment_status;
+
+-- calculate the total amount refunded
+
+select payment_status,sum(payment_amount) as Total_Amount
+from payments
+where payment_status = 'Refunded'
+group by payment_status;
+
+-- find the number of payments made using each payment methods
+
+
+SELECT
+    PAYMENT_METHOD,
+    SUM(PAYMENT_AMOUNT) AS Total_Amount
+FROM PAYMENTS
+WHERE PAYMENT_STATUS = 'Completed'
+GROUP BY PAYMENT_METHOD
+ORDER BY Total_Amount DESC
+LIMIT 1;
+
+
+-- identity the payments method generating the highest completed patment value
+
+select payment_method, sum(payment_amount) as Totla_Amount
+from payments
+where payment_status = 'completed'
+group by payment_method
+order by Totla_Amount desc limit 1;
+
+-- Find orders that has payment status as failed
+
+
+SELECT
+    o.ORDERS_ID,
+    p.PAYMENT_STATUS
+FROM ORDERS AS o
+LEFT JOIN PAYMENTS AS p
+    ON o.ORDERS_ID = p.ORDER_ID
+WHERE p.PAYMENT_STATUS = 'Failed';
+
+
+-- Identify the payment method generating the highest completed payment value.
+
+
+SELECT
+    PAYMENT_METHOD,
+    SUM(PAYMENT_AMOUNT) AS Total_Amount
+FROM PAYMENTS
+WHERE PAYMENT_STATUS = 'Completed'
+GROUP BY PAYMENT_METHOD
+ORDER BY Total_Amount DESC
+LIMIT 1;
+
+-- compare total sales revenue with total completed payments
+
+select (select sum(sales*quantity) from sales) as Total_Revenue,
+(select sum(payment_amount) as Total_Amount from Payments where
+payment_status = 'Completed') as Total_Completed_Payments;
